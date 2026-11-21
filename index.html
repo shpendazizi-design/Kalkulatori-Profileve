@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kalkulatori i Peshës së Metalit</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#f3f5f8;--card:#fff;--tx:#14202e;--mut:#5d6b7c;--bd:#d7dde6;--ac:#c2410c;--acs:#fff1e8;--ok:#0f766e}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0f1620;--card:#18222f;--tx:#e8edf3;--mut:#93a1b3;--bd:#2b3848;--ac:#fb923c;--acs:#2a1d14;--ok:#5eead4}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#0f1620;--card:#18222f;--tx:#e8edf3;--mut:#93a1b3;--bd:#2b3848;--ac:#fb923c;--acs:#2a1d14;--ok:#5eead4}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.w{max-width:820px;margin:0 auto;padding:16px}
+h1{font-size:1.4rem;margin:4px 0 2px}.sub{color:var(--mut);margin:0 0 14px;font-size:.92rem}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px;margin-bottom:14px}
+h2{font-size:.8rem;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);margin:0 0 10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:8px}
+.pb{background:var(--card);border:2px solid var(--bd);border-radius:12px;padding:8px 4px;color:var(--tx);cursor:pointer;font:inherit;font-size:.78rem;text-align:center;line-height:1.2}
+.pb svg{width:52px;height:52px;display:block;margin:0 auto 4px;fill:var(--mut)}
+.pb.on{border-color:var(--ac);background:var(--acs)}.pb.on svg{fill:var(--ac)}
+.desc{display:flex;gap:12px;align-items:center;margin-top:12px;padding:10px;border-radius:10px;background:var(--acs)}
+.desc svg{width:64px;height:64px;flex:none;fill:var(--ac)}.desc b{display:block}.desc span{font-size:.88rem;color:var(--mut)}
+.f{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+label{display:block;font-size:.82rem;color:var(--mut);margin-bottom:3px}
+input,select{width:100%;padding:10px;border:1px solid var(--bd);border-radius:9px;background:var(--bg);color:var(--tx);font:inherit}
+input:focus,select:focus,.pb:focus-visible{outline:2px solid var(--ac);outline-offset:1px}
+.res{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.r{background:var(--bg);border-radius:10px;padding:10px}.r small{color:var(--mut);display:block;font-size:.76rem}.r b{font-size:1.1rem}
+.big{grid-column:1/-1;background:var(--ac);color:#fff}.big small{color:#ffe8d9}.big b{font-size:1.9rem}
+.warn{color:#b91c1c;font-size:.88rem;margin-top:8px;min-height:1.2em}
+ul{margin:0;padding-left:18px;font-size:.88rem;color:var(--mut)}li{margin-bottom:5px}
+</style>
+</head>
+<body>
+<div class="w">
+<h1>Kalkulatori i Peshës së Metalit</h1>
+<p class="sub">Profile, tuba, shufra dhe llamarinë: llogaritje e shpejtë e peshës sipas përmasave dhe llojit të materialit.</p>
+
+<div class="card"><h2>1. Zgjidh llojin e profilit</h2><div class="grid" id="types"></div><div class="desc" id="desc"></div></div>
+
+<div class="card"><h2>2. Materiali</h2>
+<div class="f"><div><label for="mat">Lloji i metalit</label><select id="mat"></select></div>
+<div><label for="den">Dendësia (g/cm³)</label><input id="den" type="text" inputmode="decimal" autocomplete="off"></div></div></div>
+
+<div class="card"><h2>3. Përmasat</h2><div class="f" id="dims"></div>
+<div class="f" style="margin-top:10px">
+<div><label for="len">Gjatësia L (m)</label><input id="len" type="text" inputmode="decimal" autocomplete="off" value="6"></div>
+<div><label for="qty">Sasia (copë)</label><input id="qty" type="number" inputmode="numeric" min="1" step="1" value="1"></div>
+<div><label for="prc">Çmimi për kg (opsional)</label><input id="prc" type="text" inputmode="decimal" autocomplete="off" placeholder="p.sh. 0,95"></div></div>
+<div class="warn" id="warn" role="alert"></div></div>
+
+<div class="card"><h2>4. Rezultati</h2><div class="res">
+<div class="r big"><small>Pesha totale</small><b id="tot">–</b></div>
+<div class="r"><small>Pesha për 1 copë</small><b id="one">–</b></div>
+<div class="r"><small>Pesha për metër (kg/m)</small><b id="kgm">–</b></div>
+<div class="r"><small>Sipërfaqja e prerjes (mm²)</small><b id="area">–</b></div>
+<div class="r"><small>Vlera totale</small><b id="cost">–</b></div></div></div>
+
+<div class="card"><h2>Shënime të rëndësishme</h2><ul>
+<li>Formula: kg/m = sipërfaqja e prerjes (mm²) × dendësia (g/cm³) ÷ 1000. Pesha = kg/m × gjatësia × sasia.</li>
+<li>Çeliku i zakonshëm ka dendësi 7.85 g/cm³; inoksi 304 rreth 7.93, inoksi 316 rreth 8.00, alumini rreth 2.70.</li>
+<li>Për IPE, HEA, HEB, HEM, IPN dhe UPN përdoren peshat nominale të tabelave standarde (me rrezet e këndeve). Për profile të tjera me përmasa të lira (tuba, këndorë, I/U/T) rrezet janë të injoruara dhe pesha del 1–4 % më e ulët.</li><li>Peshat e tabelave jepen për çelik 7.85 g/cm³; për metal tjetër shkallëzohen sipas dendësisë.</li>
+<li>Tolerancat e prodhimit (±5 % në peshë sipas EN 10034, EN 10219 etj.) bëjnë që pesha reale e peshuar të ndryshojë nga ajo teorike.</li>
+<li>Për llamarinë: shkruaj gjerësinë në mm, trashësinë në mm dhe gjatësinë në metra. Pllaka 2000×1000 mm me 3 mm = gjerësia 1000, gjatësia 2.</li>
+<li>Për ofertë, shto rezervë 3–5 % për humbje në prerje dhe skarcë.</li>
+<li>Ky është një mjet llogaritës orientues; për projekte statike ose porosi kritike verifiko me certifikatën e prodhuesit.</li></ul></div>
+</div>
+<script>
+const MAT=[["Çelik karboni (S235/S355)",7.85],["Inox 304 / 304L",7.93],["Inox 316 / 316L",8.0],["Alumin",2.70],["Bakër",8.96],["Tunxh",8.5],["Gize",7.2],["Titan",4.51],["Zink",7.14],["Tjetër (shkruaj vetë)",7.85]];
+const S=(p)=>'<svg viewBox="0 0 64 64" aria-hidden="true">'+p+'</svg>';
+const E='fill-rule="evenodd"';
+const T={
+plate:{n:"Llamarinë / Pllakë",d:"Llamarinë ose pllakë e sheshtë (rrjetë, pllakë ndërtimi, fletë).",f:[["b","Gjerësia b (mm)",1000],["t","Trashësia t (mm)",3]],a:v=>v.b*v.t,i:S('<path d="M8 38 20 26h38L46 38z"/><path d="M8 38h38v8H8z" opacity=".75"/><path d="M46 38 58 26v8L46 46z" opacity=".55"/>')},
+flat:{n:"Hekur i sheshtë",d:"Shirit metalik drejtkëndor (flat bar).",f:[["b","Gjerësia b (mm)",40],["t","Trashësia t (mm)",5]],a:v=>v.b*v.t,i:S('<rect x="6" y="24" width="52" height="16" rx="1"/>')},
+round:{n:"Shufër e rrumbullakët",d:"Shufër masive me prerje rrethore.",f:[["d","Diametri d (mm)",20]],a:v=>Math.PI*v.d*v.d/4,i:S('<circle cx="32" cy="32" r="22"/>')},
+square:{n:"Shufër katrore",d:"Shufër masive me prerje katrore.",f:[["a","Brinja a (mm)",20]],a:v=>v.a*v.a,i:S('<rect x="12" y="12" width="40" height="40"/>')},
+hex:{n:"Shufër gjashtëkëndore",d:"Shufër masive gjashtëkëndore; masa matet midis dy faqeve paralele.",f:[["s","Gjerësia përmes faqeve s (mm)",19]],a:v=>Math.sqrt(3)/2*v.s*v.s,i:S('<polygon points="32,8 53,20 53,44 32,56 11,44 11,20"/>')},
+rtube:{n:"Tub i rrumbullakët",d:"Tub me prerje rrethore të zbrazët.",f:[["d","Diametri i jashtëm D (mm)",48.3],["t","Trashësia e murit t (mm)",3]],a:v=>Math.PI*(v.d-v.t)*v.t,hol:1,i:S('<path '+E+' d="M32 8a24 24 0 1 0 .01 0zM32 18a14 14 0 1 1-.01 0z"/>')},
+stube:{n:"Tub katror / drejtkëndor",d:"Profil i zbrazët katror ose drejtkëndor (kutia). Për katror, vendos të dyja masat të barabarta.",f:[["b","Gjerësia b (mm)",40],["h","Lartësia h (mm)",40],["t","Trashësia e murit t (mm)",2]],a:v=>2*v.t*(v.b+v.h-2*v.t),hol:2,i:S('<path '+E+' d="M8 14h48v36H8zM16 22v20h32V22z"/>')},
+angle:{n:"Këndor (L)",d:"Profil në formë L me krahë të barabartë ose jo të barabartë.",f:[["a","Krahu a (mm)",50],["b","Krahu b (mm)",50],["t","Trashësia t (mm)",5]],a:v=>v.t*(v.a+v.b-v.t),hol:3,i:S('<path d="M14 10h12v28h28v12H14z"/>')},
+tee:{n:"Profil T",d:"Profil në formë T.",f:[["b","Gjerësia e flanxhës b (mm)",50],["h","Lartësia totale h (mm)",50],["t","Trashësia t (mm)",6]],a:v=>v.b*v.t+(v.h-v.t)*v.t,hol:3,i:S('<path d="M8 12h48v11H37v30H27V23H8z"/>')},
+u:{n:"Profil U (UPN)",d:"Profil kanal në formë U.",f:[["h","Lartësia h (mm)",100],["b","Gjerësia e flanxhës b (mm)",50],["tw","Trashësia e bërthamës tw (mm)",6],["tf","Trashësia e flanxhës tf (mm)",8.5]],a:v=>v.h*v.tw+2*(v.b-v.tw)*v.tf,hol:4,i:S('<path d="M10 10h14v32h16V10h14v44H10z"/>')},
+i:{n:"Profil I / H (IPE, HEA, HEB)",d:"Traversa në formë I ose H me flanxha dhe bërthamë.",f:[["h","Lartësia h (mm)",200],["b","Gjerësia b (mm)",100],["tw","Trashësia e bërthamës tw (mm)",5.6],["tf","Trashësia e flanxhës tf (mm)",8.5]],a:v=>2*v.b*v.tf+(v.h-2*v.tf)*v.tw,hol:4,i:S('<path d="M10 10h44v10H37v24h17v10H10V44h17V20H10z"/>')}
+};
+const mk=(p,a)=>a.map(x=>[p+' '+x[0],x[1]]);
+const IPE=mk('IPE',[[80,6.0],[100,8.1],[120,10.4],[140,12.9],[160,15.8],[180,18.8],[200,22.4],[220,26.2],[240,30.7],[270,36.1],[300,42.2],[330,49.1],[360,57.1],[400,66.3],[450,77.6],[500,90.7],[550,106],[600,122]]);
+const HEA=mk('HEA',[[100,16.7],[120,19.9],[140,24.7],[160,30.4],[180,35.5],[200,42.3],[220,50.5],[240,60.3],[260,68.2],[280,76.4],[300,88.3],[320,97.6],[340,105],[360,112],[400,125],[450,140],[500,155],[550,166],[600,178],[650,190],[700,204],[800,224],[900,252],[1000,272]]);
+const HEB=mk('HEB',[[100,20.4],[120,26.7],[140,33.7],[160,42.6],[180,51.2],[200,61.3],[220,71.5],[240,83.2],[260,93.0],[280,103],[300,117],[320,127],[340,134],[360,142],[400,155],[450,171],[500,187],[550,199],[600,212],[650,225],[700,241],[800,262],[900,291],[1000,314]]);
+const HEM=mk('HEM',[[100,41.8],[120,52.1],[140,63.2],[160,76.2],[180,88.9],[200,103],[220,117],[240,157],[260,172],[280,189],[300,238],[320,245],[340,248],[360,250],[400,256],[450,263],[500,270],[550,278],[600,285],[650,293],[700,301],[800,317],[900,333],[1000,349]]);
+const UPN=mk('UPN',[[30,4.27],[40,4.87],[50,5.59],[65,7.09],[80,8.64],[100,10.6],[120,13.4],[140,16.0],[160,18.8],[180,22.0],[200,25.3],[220,29.4],[240,33.2],[260,37.9],[280,41.8],[300,46.2],[320,59.5],[350,60.6],[380,63.1],[400,71.8]]);
+const IPN=mk('IPN',[[80,5.94],[100,8.34],[120,11.1],[140,14.3],[160,17.9],[180,21.9],[200,26.2],[220,31.1],[240,36.2],[260,41.9],[280,47.9],[300,54.2],[320,61.1],[340,68.0],[360,76.1],[380,84.0],[400,92.4],[450,115],[500,141],[550,167],[600,199]]);
+const std=(n,d,k,s,i,def)=>({n:n,d:d,k:k,std:s,f:[],def:def,i:i});
+Object.assign(T,{
+ipe:std('IPE','Traversa I me flanxha paralele (EN 10365). Pesha merret nga tabela standarde.','IPE',IPE,T.i.i,6),
+hea:std('HEA','Traversa H e lehtë me flanxha të gjera (EN 10365).','HEA',HEA,T.i.i,4),
+heb:std('HEB','Traversa H e zakonshme me flanxha të gjera (EN 10365).','HEB',HEB,T.i.i,4),
+hem:std('HEM','Traversa H e rëndë me flanxha të gjera dhe trashësi të madhe (EN 10365).','HEM',HEM,T.i.i,4),
+ipn:std('IPN','Traversa I me flanxha të pjerrëta (DIN 1025), seria e vjetër europiane.','IPN',IPN,T.i.i,6),
+upn:std('UPN','Profil kanal U me flanxha të pjerrëta (DIN 1026).','UPN',UPN,T.u.i,5)});
+const $=id=>document.getElementById(id);
+const pf=s=>parseFloat(String(s).trim().replace(',','.'));
+let cur='plate';
+const fmt=(x,d=2)=>x.toLocaleString('de-DE',{minimumFractionDigits:d,maximumFractionDigits:d});
+MAT.forEach((m,k)=>{const o=document.createElement('option');o.value=k;o.textContent=m[0];$('mat').appendChild(o)});
+$('den').value=MAT[0][1];
+$('mat').onchange=()=>{$('den').value=MAT[$('mat').value][1];calc()};
+function build(){
+ $('types').innerHTML='';
+ Object.keys(T).forEach(k=>{const b=document.createElement('button');b.type='button';b.className='pb'+(k===cur?' on':'');b.setAttribute('aria-pressed',k===cur);b.innerHTML=T[k].i+T[k].n;b.onclick=()=>{cur=k;build()};$('types').appendChild(b)});
+ const t=T[cur];
+ $('desc').innerHTML=t.i+'<div><b>'+t.n+'</b><span>'+t.d+'</span></div>';
+ $('dims').innerHTML=t.std?'<div><label for="sz">Madhësia '+t.k+' (kg/m sipas tabelës)</label><select id="sz">'+t.std.map((s,k)=>'<option value="'+k+'">'+s[0]+' · '+s[1]+' kg/m</option>').join('')+'</select></div>':t.f.map(f=>'<div><label for="d_'+f[0]+'">'+f[1]+'</label><input id="d_'+f[0]+'" data-k="'+f[0]+'" type="text" inputmode="decimal" autocomplete="off" value="'+f[2]+'"></div>').join('');
+ document.querySelectorAll('#dims input').forEach(i=>i.oninput=calc);
+ if($('sz')){$('sz').value=t.def;$('sz').onchange=calc}
+ calc();
+}
+function calc(){
+ const t=T[cur],v={};let ok=true,msg='';
+ document.querySelectorAll('#dims input').forEach(i=>{v[i.dataset.k]=pf(i.value);if(!(v[i.dataset.k]>0))ok=false});
+ const L=pf($('len').value),q=parseInt($('qty').value)||1,den=pf($('den').value),p=pf($('prc').value);
+ if(!(L>0)||!(den>0))ok=false;
+ if(ok){
+  if(t.hol===1&&v.t*2>=v.d){ok=false;msg='Trashësia e murit duhet të jetë më e vogël se gjysma e diametrit.'}
+  if(t.hol===2&&v.t*2>=Math.min(v.b,v.h)){ok=false;msg='Trashësia e murit është shumë e madhe për këto përmasa.'}
+  if(t.hol===3&&v.t>Math.max(v.a||0,v.b||0,v.h||0)){ok=false;msg='Trashësia nuk mund të jetë më e madhe se krahu.'}
+  if(t.hol===4&&(2*v.tf>=v.h||v.tw>v.b)){ok=false;msg='Kontrollo trashësitë: ato janë të papërshtatshme me lartësinë ose gjerësinë.'}
+ }
+ $('warn').textContent=msg||(ok?'':'Plotëso të gjitha fushat me vlera më të mëdha se zero.');
+ if(!ok){['tot','one','kgm','area','cost'].forEach(x=>$(x).textContent='–');return}
+ const A=t.std?t.std[$('sz').value][1]/7.85*1000:t.a(v),kgm=A*den/1000,one=kgm*L,tot=one*q;
+ $('tot').textContent=fmt(tot)+' kg';
+ $('one').textContent=fmt(one)+' kg';
+ $('kgm').textContent=fmt(kgm,3)+' kg/m';
+ $('area').textContent=fmt(A,1);
+ $('cost').textContent=p>0?fmt(tot*p)+' (çmim × kg)':'–';
+}
+['len','qty','prc','den'].forEach(x=>$(x).oninput=calc);
+build();
+</script>
+</body>
+</html>
