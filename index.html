@@ -130,13 +130,19 @@ function calc(){
   var p=shownOn/win*100;
   var cOn=cyc*p/100,cOff=cyc-cOn;
   var stepped=!!STEP[DEV[dev.value][0]],rOn=Math.round(cOn),rOff=cyc-rOn,need=cOn;
+  $("cyc").disabled=stepped;
   if(stepped){
-    var best=1e12;
-    for(var k=10;k<=25;k++){
-      var o=Math.min(160,Math.max(10,Math.round((cyc-k)/10)*10));
+    var cands=[],minE=1e12;
+    for(var k=15;k<=25;k++){for(var o=10;o<=160;o+=10){
       var e=Math.abs(k/(k+o)*win*workDays*rate-ml);
-      if(e<best){best=e;rOn=k;rOff=o;}
-    }
+      cands.push([k,o,e]);if(e<minE)minE=e;
+    }}
+    var tol=minE+ml*0.005,pick=null;
+    cands.forEach(function(c){
+      if(c[2]>tol)return;
+      if(!pick||c[0]>pick[0]||(c[0]===pick[0]&&c[2]<pick[2]))pick=c;
+    });
+    rOn=pick[0];rOff=pick[1];
     p=rOn/(rOn+rOff)*100;shownOn=win*p/100;shownOff=win-shownOn;
   }
   $("resTitle").textContent="Çdo cikël prej "+num(rOn+rOff)+" sekondash";
@@ -153,7 +159,7 @@ function calc(){
   }else{
     w.style.display="none";
   }
-  $("calc").textContent=(stepped?"ON zgjidhet 10–25 sekonda (hapa prej 1) dhe OFF në hapa prej 10 (10–160), me ciklin afër "+num(cyc)+" s, që shpenzimi të jetë sa më afër sasisë. "+(Math.abs(shownOn*workDays*rate-ml)/ml>0.05?"Kujdes: me këto kufij ky difuzor nuk e arrin saktë sasinë e kërkuar. ":"")+"Shpenzimi real: "+r1(shownOn*workDays*rate)+" ml në muaj nga "+r1(ml)+" ml të kërkuara. ":"")+"Bazuar në "+r1(workDays)+" ditë pune në muaj (52 javë ÷ 12 × "+days+" ditë). Koha totale ON në muaj: "+num(onMonth)+" sekonda.";
+  $("calc").textContent=(stepped?"ON zgjidhet 15–25 sekonda (hapa prej 1) dhe OFF 10–160 sekonda (hapa prej 10). Cikli del sipas shpenzimit dhe nuk është i fiksuar. "+(Math.abs(shownOn*workDays*rate-ml)/ml>0.05?"Kujdes: me këto kufij ky difuzor nuk e arrin saktë sasinë e kërkuar. ":"")+"Shpenzimi real: "+r1(shownOn*workDays*rate)+" ml në muaj nga "+r1(ml)+" ml të kërkuara. ":"")+"Bazuar në "+r1(workDays)+" ditë pune në muaj (52 javë ÷ 12 × "+days+" ditë). Koha totale ON në muaj: "+num(onMonth)+" sekonda.";
 }
 
 document.querySelectorAll("#days button").forEach(function(b){
